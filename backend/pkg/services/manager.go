@@ -8,6 +8,8 @@ import (
 type Service interface {
 	CreateOrder(customer models.Customer, order models.Order) error
 	GetCustomerInfo(numberPhone string) (*models.Customer, error)
+	CreateCustomer(models.Customer) error
+	GetCustomerByID(id int64) (*models.Customer, error)
 	GetProducts() ([]models.Product, error)
 	GetProductsByName(name string) (*models.Product, error)
 	GetOrderByCustomerID(customerID int64) ([]models.Order, error)
@@ -59,4 +61,12 @@ func (s *service) GetCustomersByProductID(productID int64) ([]models.Customer, e
 
 	return nil, nil
 
+}
+
+func (s *service) CreateCustomer(models.Customer) error {
+	return nil
+}
+
+func (s *service) GetCustomerByID(id int64) (*models.Customer, error) {
+	return nil, nil
 }
