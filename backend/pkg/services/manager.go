@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"strconv"
 
 	"github.com/nghiack7/manager/pkg/models"
 	"github.com/nghiack7/manager/pkg/repositories"
@@ -63,10 +64,21 @@ func (s *service) validateOrder(o models.Order) error {
 }
 
 func (s *service) GetCustomerInfo(phoneNumber string) (*models.Customer, error) {
-	var customer *models.Customer
-	err := s.user.FindUser()
+	//validate numberphone
+	if phoneNumber == "" {
+		return nil, errors.New("invalid phone number")
+	}
+	if _, err := strconv.ParseInt(phoneNumber, 64, 10); err != nil {
+		return nil, errors.New("invalid phone number")
+	}
 
-	return nil, nil
+	// Perform business logic related to getting the customer info, like getting it from a database
+	customer, err := s.user.FindUser(phoneNumber)
+	if err != nil {
+		return nil, err
+	}
+
+	return &customer, err
 }
 
 func (s *service) GetProducts() ([]models.Product, error) {
