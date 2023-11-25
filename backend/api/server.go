@@ -12,12 +12,15 @@ import (
 
 type f func(s *server)
 type Server interface {
+	Start() error
+	Stop(context.Context) error
 }
 
 type server struct {
-	http.Server
+	server   http.Server
 	cHandler handlers.CustomerHandler
 	pHandler handlers.ProductHandler
+	oHandler handlers.OrderHandler
 }
 
 func NewServer(opts ...f) Server {
@@ -31,16 +34,22 @@ func NewServer(opts ...f) Server {
 }
 
 func newDefaultServer(r http.Handler, addr string) *server {
-	return &server{http.Server{Handler: r, Addr: addr}, nil, nil}
+	return &server{server: http.Server{Handler: r, Addr: addr}}
 }
-func (s *server) WithCustomerHandler(cHandler handlers.CustomerHandler) f {
+func WithCustomerHandler(cHandler handlers.CustomerHandler) f {
 	return func(s *server) {
 		s.cHandler = cHandler
 	}
 }
-func (s *server) WithProductHandler(pHandler handlers.ProductHandler) f {
+func WithProductHandler(pHandler handlers.ProductHandler) f {
 	return func(s *server) {
 		s.pHandler = pHandler
+	}
+}
+
+func WithOrderHandler(oHandler handlers.OrderHandler) f {
+	return func(s *server) {
+		s.oHandler = oHandler
 	}
 }
 
@@ -49,7 +58,7 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) Start() error {
-	err := s.ListenAndServe()
+	err := s.server.ListenAndServe()
 	if err != nil {
 		return err
 	}
@@ -59,7 +68,7 @@ func (s *server) Start() error {
 func (s *server) Stop(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
-	return s.Shutdown(ctx)
+	return s.server.Shutdown(ctx)
 }
 
 func (s *server) registerRoute(r *gin.Engine) {

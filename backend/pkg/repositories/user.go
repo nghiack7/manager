@@ -5,7 +5,12 @@ import (
 	"gorm.io/gorm"
 )
 
-type UserRepository interface{}
+type UserRepository interface {
+	CreateNewUser(models.Customer) error
+	UpdateUser(models.Customer) error
+	FindUser(string) (models.Customer, error)
+	GetCustomersByProductID(int64) ([]models.Customer, error)
+}
 
 type userRepository struct {
 	db *gorm.DB

@@ -6,7 +6,10 @@ import (
 	"github.com/nghiack7/manager/pkg/services"
 )
 
-type OrderHandler interface{}
+type OrderHandler interface {
+	CreateOrder(c *gin.Context)
+	UpdateOrder(c *gin.Context)
+}
 
 type orderHandler struct {
 	service services.Service
@@ -34,4 +37,8 @@ func (h *orderHandler) CreateOrder(gCtx *gin.Context) {
 		return
 	}
 	gCtx.JSON(200, Response{true, MessageSuccess, nil})
+}
+
+func (h *orderHandler) UpdateOrder(c *gin.Context) {
+	return
 }

@@ -56,3 +56,18 @@ func (h *productHandler) GetProductByName(gCtx *gin.Context) {
 	}
 	gCtx.JSON(http.StatusOK, Response{true, MessageSuccess, response})
 }
+
+func (h *productHandler) CreateProduct(gCtx *gin.Context) {
+	var req models.Product
+	err := gCtx.ShouldBindJSON(&req)
+	if err != nil {
+		gCtx.AbortWithStatusJSON(400, Response{false, MessageFailedBadRequest, nil})
+		return
+	}
+	err = h.service.CreateProduct(req)
+	if err != nil {
+		gCtx.AbortWithStatusJSON(500, Response{false, MessageFailedDatabase, nil})
+		return
+	}
+	gCtx.JSON(200, Response{true, MessageSuccess, nil})
+}

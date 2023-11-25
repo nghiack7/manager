@@ -1,38 +1,38 @@
 package services
 
-import "github.com/nghiack7/manager/pkg/repositories"
+import (
+	"github.com/nghiack7/manager/pkg/repositories"
+)
 
-type Builder interface{}
-
-type serviceBuilder struct {
-	service *service
+type ServiceBuilder struct {
+	userRepo    repositories.UserRepository
+	productRepo repositories.ProductRepository
+	orderRepo   repositories.OrderRepository
 }
 
-func (builder *serviceBuilder) reset() {
-	builder.service = &service{}
+func NewServiceBuilder() *ServiceBuilder {
+	return &ServiceBuilder{}
 }
 
-func (builder *serviceBuilder) setUser(user repositories.UserRepository) {
-	if user == nil {
-		user = repositories.NewUserRepository()
+func (sb *ServiceBuilder) WithUserRepository(repo repositories.UserRepository) *ServiceBuilder {
+	sb.userRepo = repo
+	return sb
+}
+
+func (sb *ServiceBuilder) WithProductRepository(repo repositories.ProductRepository) *ServiceBuilder {
+	sb.productRepo = repo
+	return sb
+}
+
+func (sb *ServiceBuilder) WithOrderRepository(repo repositories.OrderRepository) *ServiceBuilder {
+	sb.orderRepo = repo
+	return sb
+}
+
+func (sb *ServiceBuilder) Build() Service {
+	return &service{
+		user:    sb.userRepo,
+		product: sb.productRepo,
+		order:   sb.orderRepo,
 	}
-	builder.service.setUser(user)
-}
-
-func (builder *serviceBuilder) setOrder(order repositories.OrderRepository) {
-	if order == nil {
-		order = repositories.NewOrderRepository()
-	}
-	builder.service.setOrder(order)
-}
-
-func (builder *serviceBuilder) setProduct(product repositories.ProductRepository) {
-	if product == nil {
-		product = repositories.NewProductRepository()
-	}
-	builder.service.setProduct(product)
-}
-
-func (builder *serviceBuilder) result() Service {
-	return builder.service
 }
