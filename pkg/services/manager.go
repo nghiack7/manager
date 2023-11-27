@@ -19,6 +19,8 @@ type Service interface {
 	GetOrderItemsByProductID(productID int64) ([]models.OrderItem, error)
 	GetCustomersByProductID(productID int64) ([]models.Customer, error)
 	CreateProduct(models.Product) error
+	UpdateProduct(models.Product) error
+	DeleteProduct(models.Product) error
 }
 
 type service struct {
@@ -78,11 +80,11 @@ func (s *service) GetCustomerInfo(phoneNumber string) (*models.Customer, error) 
 		return nil, err
 	}
 
-	return &customer, err
+	return customer, err
 }
 
 func (s *service) GetProducts() ([]models.Product, error) {
-	return nil, nil
+	return s.product.GetAllProducts()
 }
 
 func (s *service) GetProductsByName(name string) (*models.Product, error) {
@@ -90,27 +92,35 @@ func (s *service) GetProductsByName(name string) (*models.Product, error) {
 }
 
 func (s *service) GetOrderByCustomerID(customerID int64) ([]models.Order, error) {
-	return nil, nil
+	return s.order.GetOrderByCustomerID(customerID)
 }
 
 func (s *service) GetOrderItemsByProductID(productID int64) ([]models.OrderItem, error) {
-	return nil, nil
+	return s.order.GetOrderItemsByProductID(productID)
 }
 
 func (s *service) GetCustomersByProductID(productID int64) ([]models.Customer, error) {
 
-	return nil, nil
+	return s.user.GetCustomersByProductID(productID)
 
 }
 
-func (s *service) CreateCustomer(models.Customer) error {
-	return nil
+func (s *service) CreateCustomer(customer models.Customer) error {
+	return s.user.CreateNewUser(customer)
 }
 
 func (s *service) GetCustomerByID(id int64) (*models.Customer, error) {
-	return nil, nil
+	return s.user.FindUser(id)
 }
 
 func (s *service) CreateProduct(product models.Product) error {
-	return nil
+	return s.product.CreateProduct(product)
+}
+
+func (s *service) UpdateProduct(product models.Product) error {
+	return s.product.UpdateProduct(product)
+}
+
+func (s *service) DeleteProduct(product models.Product) error {
+	return s.product.DeleteProduct(product)
 }

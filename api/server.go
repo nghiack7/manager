@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 	"github.com/nghiack7/manager/api/routes"
 	"github.com/nghiack7/manager/handlers"
@@ -72,7 +73,10 @@ func (s *server) Stop(ctx context.Context) error {
 }
 
 func (s *server) registerRoute(r *gin.Engine) {
+	r.Use(static.Serve("/", static.LocalFile("./views/build", true)))
+
 	api := r.Group("/api")
 	routes.RegisterUserRoute(api, s.cHandler)
 	routes.RegisterProductRoute(api, s.pHandler)
+	routes.RegisterOrderRoute(api, s.oHandler)
 }

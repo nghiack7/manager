@@ -9,5 +9,6 @@ func RegisterOrderRoute(r *gin.RouterGroup, order handlers.OrderHandler) {
 	r = r.Group("/orders")
 	{
 		r.POST("/", order.CreateOrder)
+
 	}
 }

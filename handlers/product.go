@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/nghiack7/manager/pkg/models"
@@ -10,6 +11,9 @@ import (
 
 type ProductHandler interface {
 	GetProductByName(gCtx *gin.Context)
+	CreateProduct(gCtx *gin.Context)
+	UpdateProduct(gCtx *gin.Context)
+	DeleteProduct(gCtx *gin.Context)
 }
 
 type productHandler struct {
@@ -65,6 +69,49 @@ func (h *productHandler) CreateProduct(gCtx *gin.Context) {
 		return
 	}
 	err = h.service.CreateProduct(req)
+	if err != nil {
+		gCtx.AbortWithStatusJSON(500, Response{false, MessageFailedDatabase, nil})
+		return
+	}
+	gCtx.JSON(200, Response{true, MessageSuccess, nil})
+}
+
+func (h *productHandler) UpdateProduct(gCtx *gin.Context) {
+	var req models.Product
+	id, err := strconv.ParseInt(gCtx.Param("id"), 10, 64)
+	if err != nil {
+		gCtx.AbortWithStatusJSON(400, Response{false, MessageFailedBadRequest, nil})
+		return
+	}
+
+	err = gCtx.ShouldBindJSON(&req)
+	if err != nil {
+		gCtx.AbortWithStatusJSON(400, Response{false, MessageFailedBadRequest, nil})
+		return
+	}
+	req.ID = id
+	err = h.service.UpdateProduct(req)
+	if err != nil {
+		gCtx.AbortWithStatusJSON(500, Response{false, MessageFailedDatabase, nil})
+		return
+	}
+	gCtx.JSON(200, Response{true, MessageSuccess, nil})
+}
+func (h *productHandler) DeleteProduct(gCtx *gin.Context) {
+	var req models.Product
+	id, err := strconv.ParseInt(gCtx.Param("id"), 10, 64)
+	if err != nil {
+		gCtx.AbortWithStatusJSON(400, Response{false, MessageFailedBadRequest, nil})
+		return
+	}
+
+	err = gCtx.ShouldBindJSON(&req)
+	if err != nil {
+		gCtx.AbortWithStatusJSON(400, Response{false, MessageFailedBadRequest, nil})
+		return
+	}
+	req.ID = id
+	err = h.service.DeleteProduct(req)
 	if err != nil {
 		gCtx.AbortWithStatusJSON(500, Response{false, MessageFailedDatabase, nil})
 		return

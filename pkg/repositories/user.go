@@ -8,7 +8,7 @@ import (
 type UserRepository interface {
 	CreateNewUser(models.Customer) error
 	UpdateUser(models.Customer) error
-	FindUser(string) (models.Customer, error)
+	FindUser(any) (*models.Customer, error)
 	GetCustomersByProductID(int64) ([]models.Customer, error)
 }
 
@@ -40,13 +40,22 @@ func (u *userRepository) UpdateUser(user models.Customer) error {
 	return nil
 }
 
-func (u *userRepository) FindUser(numberPhone string) (models.Customer, error) {
+func (u *userRepository) FindUser(param any) (*models.Customer, error) {
 	var user models.Customer
-	err := u.db.Where("number_phone=?", user).First(&user).Error
-	if err != nil {
-		return user, err
+	switch id := param.(type) {
+	case string:
+		err := u.db.Where("number_phone=?", id).First(&user).Error
+		if err != nil {
+			return &user, err
+		}
+	case int64:
+		err := u.db.Where("id=?", id).First(&user).Error
+		if err != nil {
+			return &user, err
+		}
 	}
-	return user, nil
+	return &user, nil
+
 }
 
 func (u *userRepository) GetCustomersByProductID(productID int64) ([]models.Customer, error) {
