@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"time"
 
@@ -9,11 +10,13 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/nghiack7/manager/api/routes"
 	"github.com/nghiack7/manager/handlers"
+	"github.com/nghiack7/manager/pkg/config"
+	"github.com/rs/zerolog/log"
 )
 
 type f func(s *server)
 type Server interface {
-	Start() error
+	Start(config.Config) error
 	Stop(context.Context) error
 }
 
@@ -58,11 +61,13 @@ func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.ServeHTTP(w, r)
 }
 
-func (s *server) Start() error {
-	err := s.server.ListenAndServe()
-	if err != nil {
-		return err
-	}
+func (s *server) Start(conf config.Config) error {
+	s.server.Addr = conf.Host + ":" + conf.Port
+	go func() {
+		if err := s.server.ListenAndServe(); err != nil && errors.Is(err, http.ErrServerClosed) {
+			log.Error().Err(err).Msg("Server ListenAndServe error")
+		}
+	}()
 	return nil
 }
 
@@ -73,10 +78,15 @@ func (s *server) Stop(ctx context.Context) error {
 }
 
 func (s *server) registerRoute(r *gin.Engine) {
+	// run static ui views
+	r.RedirectTrailingSlash = true
 	r.Use(static.Serve("/", static.LocalFile("./views/build", true)))
 
 	api := r.Group("/api")
 	routes.RegisterUserRoute(api, s.cHandler)
 	routes.RegisterProductRoute(api, s.pHandler)
 	routes.RegisterOrderRoute(api, s.oHandler)
+	r.NoRoute(func(ctx *gin.Context) {
+		ctx.Redirect(http.StatusTemporaryRedirect, "/")
+	})
 }

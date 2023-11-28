@@ -1,6 +1,10 @@
 package handlers
 
 import (
+	"net/http"
+	"strings"
+	"sync"
+
 	"github.com/gin-gonic/gin"
 	"github.com/nghiack7/manager/pkg/models"
 	"github.com/nghiack7/manager/pkg/services"
@@ -9,6 +13,7 @@ import (
 type OrderHandler interface {
 	CreateOrder(c *gin.Context)
 	UpdateOrder(c *gin.Context)
+	GetOrderByCustomerID(c *gin.Context)
 }
 
 type orderHandler struct {
@@ -41,4 +46,41 @@ func (h *orderHandler) CreateOrder(gCtx *gin.Context) {
 
 func (h *orderHandler) UpdateOrder(c *gin.Context) {
 	return
+}
+
+func (h *orderHandler) GetOrderByCustomerID(gCtx *gin.Context) {
+	param := gCtx.Query("search")
+	if param == "" {
+		gCtx.AbortWithStatusJSON(400, Response{false, MessageFailedBadRequest, nil})
+		return
+	}
+	var ids []int64
+	customers, _ := h.service.GetListCustomers()
+	for _, customer := range customers {
+		if strings.Contains(customer.Name, param) || strings.Contains(customer.NumberPhone, param) {
+			ids = append(ids, customer.ID)
+		}
+	}
+	if len(ids) == 0 {
+		gCtx.AbortWithStatusJSON(400, Response{false, MessageFailedBadRequest, nil})
+		return
+	}
+	var orders []models.Order
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	wg.Add(len(ids))
+	for _, id := range ids {
+		go func(id int64) {
+			order, err := h.service.GetOrderByCustomerID(id)
+			if err != nil {
+				return
+			}
+			mu.Lock()
+			orders = append(orders, order...)
+			mu.Unlock()
+			defer wg.Done()
+		}(id)
+	}
+	wg.Wait()
+	gCtx.JSON(http.StatusOK, Response{true, MessageSuccess, orders})
 }

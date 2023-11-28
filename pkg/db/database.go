@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"bitbucket.org/liamstask/goose/lib/goose"
+	"github.com/nghiack7/manager/pkg/config"
 	"github.com/opentracing/opentracing-go/log"
 	"gorm.io/driver/sqlite" // Sqlite driver based on CGO
 
@@ -15,7 +16,7 @@ import (
 
 type f func()
 
-func InitDatabase() (*gorm.DB, error) {
+func InitDatabase(conf config.Config) (*gorm.DB, error) {
 
 	var (
 		one sync.Once
@@ -27,7 +28,7 @@ func InitDatabase() (*gorm.DB, error) {
 		migrateConf := &goose.DBConf{
 			MigrationsDir: "pkg/migrations",
 			Env:           "production",
-			Driver:        chooseDBDriver("sqlite", "manager.db"),
+			Driver:        chooseDBDriver("sqlite", conf.DbName),
 		}
 		// Get the latest possible migration
 		latest, err := goose.GetMostRecentDBVersion(migrateConf.MigrationsDir)
@@ -37,7 +38,7 @@ func InitDatabase() (*gorm.DB, error) {
 		}
 		i := 0
 		for {
-			db, err = gorm.Open(sqlite.Open("manager.db"), &gorm.Config{})
+			db, err = gorm.Open(sqlite.Open(conf.DbName), &gorm.Config{})
 			if err == nil {
 				break
 			}

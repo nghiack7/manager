@@ -11,6 +11,7 @@ import (
 type Service interface {
 	CreateOrder(customer models.Customer, order models.Order) error
 	GetCustomerInfo(numberPhone string) (*models.Customer, error)
+	GetListCustomers() ([]models.Customer, error)
 	CreateCustomer(models.Customer) error
 	GetCustomerByID(id int64) (*models.Customer, error)
 	GetProducts() ([]models.Product, error)
@@ -65,6 +66,10 @@ func (s *service) validateOrder(o models.Order) error {
 	return nil // Return nil if the order passes validation
 }
 
+func (s *service) GetListCustomers() ([]models.Customer, error) {
+	return s.user.GetCustomersList()
+}
+
 func (s *service) GetCustomerInfo(phoneNumber string) (*models.Customer, error) {
 	//validate numberphone
 	if phoneNumber == "" {
@@ -88,7 +93,7 @@ func (s *service) GetProducts() ([]models.Product, error) {
 }
 
 func (s *service) GetProductsByName(name string) (*models.Product, error) {
-	return nil, nil
+	return s.product.GetProductByName(name)
 }
 
 func (s *service) GetOrderByCustomerID(customerID int64) ([]models.Order, error) {

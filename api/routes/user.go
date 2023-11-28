@@ -8,7 +8,9 @@ import (
 func RegisterUserRoute(r *gin.RouterGroup, cHandler handlers.CustomerHandler) {
 	route := r.Group("/customers")
 	{
-		route.GET("/", cHandler.GetCustomerByPhone)
+		route.GET("/", cHandler.GetListCustomers)
+		route.GET("/byphone", cHandler.GetCustomerByPhone)
 		route.GET("/info", cHandler.GetCustomerOrders)
+		route.POST("/", cHandler.CreateCustomer)
 	}
 }

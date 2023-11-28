@@ -10,6 +10,7 @@ type UserRepository interface {
 	UpdateUser(models.Customer) error
 	FindUser(any) (*models.Customer, error)
 	GetCustomersByProductID(int64) ([]models.Customer, error)
+	GetCustomersList() ([]models.Customer, error)
 }
 
 type userRepository struct {
@@ -25,7 +26,7 @@ func NewUserRepository(opts ...RepoOpts) *userRepository {
 }
 
 func (u *userRepository) CreateNewUser(user models.Customer) error {
-	err := u.db.Create(&user).Error
+	err := u.db.Save(&user).Error
 	if err != nil {
 		return err
 	}
@@ -69,4 +70,13 @@ func (u *userRepository) GetCustomersByProductID(productID int64) ([]models.Cust
 		Select("customers.id, customers.name, customers.gender, customers.number_phone").Distinct("id").
 		Find(&customer).Error
 	return customer, err
+}
+
+func (u *userRepository) GetCustomersList() ([]models.Customer, error) {
+	var customers []models.Customer
+	err := u.db.Find(&customers).Error
+	if err != nil {
+		return nil, err
+	}
+	return customers, nil
 }

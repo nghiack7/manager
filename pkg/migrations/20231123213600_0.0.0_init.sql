@@ -2,7 +2,7 @@
 -- SQL in section 'Up' is executed when the migration is applied
 
 -- Create Customer table
-CREATE TABLE customer (
+CREATE TABLE customers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT,
     gender TEXT,
@@ -10,24 +10,23 @@ CREATE TABLE customer (
 );
 
 -- Create Product table
-CREATE TABLE product (
+CREATE TABLE products (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT,
     price REAL
 );
 
 -- Create Order table
-CREATE TABLE order_table (
+CREATE TABLE order_tables (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     customer_id INTEGER,
-    created_at TEXT
-       FOREIGN KEY(customer_id) REFERENCES customer(id),
- 
+    created_at TEXT,
+    FOREIGN KEY(customer_id) REFERENCES customer(id)
 );
 
--- Create OrderItem table with a foreign key reference to the order_table
-CREATE TABLE order_item (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+-- Create OrderItem table with a foreign key reference to the order_table and product table
+CREATE TABLE order_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     order_id INTEGER,
     product_id INTEGER,
     quantity INTEGER,
@@ -39,7 +38,7 @@ CREATE TABLE order_item (
 -- SQL section 'Down' is executed when the migration is rolled back
 
 -- Drop tables in reverse order of creation
-DROP TABLE IF EXISTS order_item;
-DROP TABLE IF EXISTS order_table;
-DROP TABLE IF EXISTS product;
-DROP TABLE IF EXISTS customer;
+DROP TABLE IF EXISTS order_items;
+DROP TABLE IF EXISTS order_tables;
+DROP TABLE IF EXISTS products;
+DROP TABLE IF EXISTS customers;

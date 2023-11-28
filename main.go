@@ -2,18 +2,34 @@ package main
 
 import (
 	"context"
+	"flag"
+	"fmt"
 	"os"
 	"os/signal"
 
 	"github.com/nghiack7/manager/api"
 	"github.com/nghiack7/manager/handlers"
+	"github.com/nghiack7/manager/pkg/config"
 	"github.com/nghiack7/manager/pkg/db"
+	"github.com/nghiack7/manager/pkg/logger"
 	"github.com/nghiack7/manager/pkg/repositories"
 	"github.com/nghiack7/manager/pkg/services"
 )
 
 func main() {
-	dbInstance, err := db.InitDatabase()
+	f := func() string {
+		flag.Usage = usage
+		env := flag.String("env", "dev", `Sets run environment. Possible values are "dev" and "prod"`)
+		flag.Parse()
+		logger.ConfigureLogger(*env)
+		if *env == "prod" {
+			logger.SetGinLogToFile()
+		}
+		return *env
+	}
+	env := f()
+	conf := config.NewConfig(env)
+	dbInstance, err := db.InitDatabase(conf)
 	if err != nil {
 		panic(err)
 	}
@@ -38,7 +54,7 @@ func main() {
 		api.WithOrderHandler(orderHandler),
 	)
 
-	server.Start()
+	server.Start(conf)
 
 	waitForShutdown(server)
 }
@@ -48,4 +64,18 @@ func waitForShutdown(server api.Server) {
 	signal.Notify(signalChan, os.Interrupt)
 	<-signalChan
 	server.Stop(context.Background())
+}
+
+func usage() {
+	fmt.Print(`This program runs Manager backend server.
+
+Usage:
+
+ [arguments]
+
+Supported arguments:
+
+`)
+	flag.PrintDefaults()
+	os.Exit(1)
 }

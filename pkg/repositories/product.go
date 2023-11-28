@@ -10,6 +10,7 @@ type ProductRepository interface {
 	UpdateProduct(models.Product) error
 	DeleteProduct(models.Product) error
 	GetAllProducts() ([]models.Product, error)
+	GetProductByName(string) (*models.Product, error)
 }
 
 type productRepository struct {
@@ -55,4 +56,13 @@ func (p *productRepository) GetAllProducts() ([]models.Product, error) {
 		return nil, err
 	}
 	return products, nil
+}
+
+func (p *productRepository) GetProductByName(name string) (*models.Product, error) {
+	var prod models.Product
+	err := p.db.Where("name=?", name).First(&prod).Error
+	if err != nil {
+		return nil, err
+	}
+	return &prod, nil
 }
