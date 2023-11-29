@@ -8,7 +8,10 @@ import {
   Button,
   Paper,
   makeStyles,
+  TablePagination,
+  TableFooter,
 } from "@material-ui/core";
+
 
 const useStyles = makeStyles({
   tableContainer: {
@@ -19,19 +22,27 @@ const useStyles = makeStyles({
   },
 });
 
-const CustomerLists = ({ customers, onEditCustomer, onDeleteCustomer }) => {
+const CustomerLists = ({
+  customers,
+  onEditCustomer,
+  onDeleteCustomer,
+  onCreateOrder,
+  onGetCustomerHistory,
+}) => {
   const classes = useStyles();
 
   return (
     <Paper className={classes.tableContainer}>
-      <Table>
-        <TableHead>
+     
+      <Table >
+        <TableHead >
           <TableRow>
-            <TableCell className={classes.tableHeaderCell}>ID</TableCell>
-            <TableCell className={classes.tableHeaderCell}>Name</TableCell>
+            <TableCell sortDirection className={classes.tableHeaderCell}>ID</TableCell>
+            <TableCell sortDirection className={classes.tableHeaderCell}>Name</TableCell>
             <TableCell className={classes.tableHeaderCell}>Gender</TableCell>
             <TableCell className={classes.tableHeaderCell}>Phone</TableCell>
             <TableCell className={classes.tableHeaderCell}>Action</TableCell>
+            <TableCell className={classes.tableHeaderCell}>Orders</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -49,6 +60,7 @@ const CustomerLists = ({ customers, onEditCustomer, onDeleteCustomer }) => {
                 >
                   Chỉnh Sửa
                 </Button>
+
                 <Button
                   variant="outlined"
                   color="secondary"
@@ -57,9 +69,26 @@ const CustomerLists = ({ customers, onEditCustomer, onDeleteCustomer }) => {
                   Xóa
                 </Button>
               </TableCell>
+              <TableCell>
+               <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => onCreateOrder(customer.id)}
+                >
+                  Tạo Đơn Hàng Mới
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={() => onGetCustomerHistory(customer.id)}
+                >
+                  Lịch Sử Mua Hàng
+                </Button>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
+        <TableFooter className={classes.tableFooterRow}>{<TablePagination/>}</TableFooter>
       </Table>
     </Paper>
   );

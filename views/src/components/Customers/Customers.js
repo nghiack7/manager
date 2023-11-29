@@ -1,15 +1,21 @@
 import { useContext, useState, useEffect, useCallback } from "react";
 
+
 import Errors from "../Errors/Errors";
 import CustomerLists from "./CustomerLists";
 import AddCustomerPopup from "./AddCustomerPopup";
 import EditCustomerPopup from "./EditCustomerPopup";
+import CreateOrderPopup from "./CreateOrderPopup";
+
 
 const Customers = () => {
+
   const [customers, setCustomers] = useState([]);
   const [errors, setErrors] = useState({});
   const [showAddPopup, setShowAddPopup] = useState(false);
   const [showEditPopup, setShowEditPopup] = useState(false);
+  const [showOrderPopup, setShowOrderPopup]= useState(false);
+  const [showHistoryPopup, setShowHistoryPopup]= useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
 
   const fetchCustomersHandler = useCallback(async () => {
@@ -65,25 +71,53 @@ const Customers = () => {
       const response = await fetch("/api/customers/", requestOptions);
       if (!response.ok) {
         throw new Error('Network response was not ok');
+      } else {
+        customerData.id = response.data.id;
       }
-      // If you expect a response body:
-      // const result = await response.json();
-      // Process the result as needed
+      
     } catch (error) {
-      setError(error);
+      setErrors(error);
     
     }
     setCustomers((prevCustomers) => [...prevCustomers, customerData]);
     setShowAddPopup(false); // Close add popup after adding customer
   };
 
-  const deleteCustomerHandler = (customerId) => {
-    // Send DELETE request to API to remove customer with 'customerId'
-    // Update 'customers' state upon successful deletion
+  const deleteCustomerHandler = async (customerId) => {
+    const requestOptions = {
+      method: "DELETE",
+      heades: {
+        'Content-Type': 'application/json',
+      },}
+    try {
+      const response = await fetch("/api/customers/${customerId}",requestOptions);
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      } else {
+         
+      }
+      
+    } catch (error) {
+      setErrors(error);
+    
+    }
     setCustomers((prevCustomers) =>
       prevCustomers.filter((customer) => customer.ID !== customerId)
     );
   };
+
+  const showHistoryOrderHandler = async (customerId) => {
+    try {
+      const response = await fetch("./api/orders/?search=${customerId}");
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+ 
+      } else {
+        const data = await response.json();
+      }
+
+    }
+  }
 
   const editCustomerHandler = (updatedCustomerData) => {
     // Assuming 'updatedCustomerData' contains modified customer information
@@ -97,17 +131,70 @@ const Customers = () => {
     setShowEditPopup(false); // Close edit popup after editing customer
   };
 
+
+  const getCustomerHistoryHandler = (customerId) => {
+    // Send DELETE request to API to remove customer with 'customerId'
+    // Update 'customers' state upon successful deletion
+    setCustomers((prevCustomers) =>
+      prevCustomers.filter((customer) => customer.ID !== customerId)
+    );
+  };  
+  const createOrderHandler = async (orderData) => {
+    const postData = {
+      customer_id: orderData.customer_id,
+      items: orderData.items,
+    }
+    const requestOptions = {
+      method: "POST",
+      heades: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(postData),
+    }
+    try {
+      const response = await fetch("/api/orders/", requestOptions);
+      const data =await response.json();
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      } else {
+        console.log("succcessfully created order", data.data)
+      }
+      
+    } catch (error) {
+      setErrors(error);
+    
+    } 
+  };
+
   const showEditPopupHandler = (customerId) => {
     const selected = customers.find((customer) => customer.id === customerId);
     setSelectedCustomer(selected);
     setShowEditPopup(true);
   };
 
+  const showCreateOrderHandler = (customerId) => {
+    const selected = customers.find((customer) => customer.id === customerId);
+    setSelectedCustomer(selected);
+    setShowOrderPopup(true);
+
+  }
+  const showHistoryHandler = (customerId) => {
+    const selected = customers.find((customer) => customer.id === customerId);
+    setSelectedCustomer(selected);
+    setShowHistoryPopup(true);
+
+  }
   const closeEditPopupHandler = () => {
     setShowEditPopup(false);
     setSelectedCustomer(null);
   };
 
+  const closeOrderPopupHandler = () => {
+    setShowOrderPopup(false);
+    setSelectedCustomer(null);  };
+    const closeHitoryPopupHandler = () => {
+      setShowHistoryPopup(false);
+      setSelectedCustomer(null);  };
   const customersContent =
     customers.length === 0 ? (
       <p>Chưa có khách hàng nào!!!</p>
@@ -116,6 +203,8 @@ const Customers = () => {
         customers={customers}
         onEditCustomer={showEditPopupHandler}
         onDeleteCustomer={deleteCustomerHandler}
+        onCreateOrder={showCreateOrderHandler}
+        onGetCustomerHistory={getCustomerHistoryHandler}
       />
     );
 
@@ -140,6 +229,20 @@ const Customers = () => {
           onClose={closeEditPopupHandler}
           customer={selectedCustomer}
           onEditCustomer={editCustomerHandler}
+        />
+      )}
+      {showOrderPopup && selectedCustomer && (
+        <CreateOrderPopup
+          onClose={closeOrderPopupHandler}
+          customer={selectedCustomer}
+          onCreateOrder={createOrderHandler}
+        />
+      )}
+       {showHistoryPopup && selectedCustomer && (
+        <CreateOrderPopup
+          onClose={closeHitoryPopupHandler}
+          customer={selectedCustomer}
+          onCreateOrder={showHistoryOrderHandler}
         />
       )}
     </section>

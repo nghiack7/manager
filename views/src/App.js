@@ -23,6 +23,7 @@ function App() {
         <Route path="/products">
           <ProductPage />
         </Route>
+       
 
          <Route path="*">
           <Redirect to="/" />
