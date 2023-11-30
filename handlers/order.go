@@ -2,8 +2,9 @@ package handlers
 
 import (
 	"net/http"
-	"strings"
+	"strconv"
 	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/nghiack7/manager/pkg/models"
@@ -14,6 +15,7 @@ type OrderHandler interface {
 	CreateOrder(c *gin.Context)
 	UpdateOrder(c *gin.Context)
 	GetOrderByCustomerID(c *gin.Context)
+	GetOrders(c *gin.Context)
 }
 
 type orderHandler struct {
@@ -36,6 +38,7 @@ func (h *orderHandler) CreateOrder(gCtx *gin.Context) {
 		gCtx.AbortWithStatusJSON(500, Response{false, MessageFailedDatabase, nil})
 		return
 	}
+	req.CreatedAt = time.Now()
 	err = h.service.CreateOrder(*customer, req)
 	if err != nil {
 		gCtx.AbortWithStatusJSON(500, Response{false, MessageFailedDatabase, nil})
@@ -54,10 +57,14 @@ func (h *orderHandler) GetOrderByCustomerID(gCtx *gin.Context) {
 		gCtx.AbortWithStatusJSON(400, Response{false, MessageFailedBadRequest, nil})
 		return
 	}
+	idparam, err := strconv.ParseInt(param, 10, 64)
+	if err != nil {
+		idparam = h.queryNameOrPhone(param)
+	}
 	var ids []int64
-	customers, _ := h.service.GetListCustomers()
+	customers, _ := h.service.ListCustomers()
 	for _, customer := range customers {
-		if strings.Contains(customer.Name, param) || strings.Contains(customer.NumberPhone, param) {
+		if idparam == customer.ID {
 			ids = append(ids, customer.ID)
 		}
 	}
@@ -71,7 +78,7 @@ func (h *orderHandler) GetOrderByCustomerID(gCtx *gin.Context) {
 	wg.Add(len(ids))
 	for _, id := range ids {
 		go func(id int64) {
-			order, err := h.service.GetOrderByCustomerID(id)
+			order, err := h.service.GetOrdersByCustomerID(id)
 			if err != nil {
 				return
 			}
@@ -83,4 +90,30 @@ func (h *orderHandler) GetOrderByCustomerID(gCtx *gin.Context) {
 	}
 	wg.Wait()
 	gCtx.JSON(http.StatusOK, Response{true, MessageSuccess, orders})
+}
+
+func (h *orderHandler) GetOrders(c *gin.Context) {
+	orders, err := h.service.GetOrders()
+	if err != nil {
+		c.AbortWithStatusJSON(500, Response{false, MessageFailedDatabase, nil})
+		return
+	}
+	for i := range orders {
+		customer, err := h.service.GetCustomerByID(orders[i].CustomerID)
+		if err != nil {
+			c.AbortWithStatusJSON(500, Response{false, MessageFailedDatabase, nil})
+			return
+		}
+		orders[i].CustomerName = customer.Name
+	}
+
+	c.JSON(200, Response{true, MessageSuccess, orders})
+}
+
+func (h *orderHandler) queryNameOrPhone(search string) int64 {
+	customer, err := h.service.GetCustomerInfo(search)
+	if err != nil {
+		return 0
+	}
+	return customer.ID
 }

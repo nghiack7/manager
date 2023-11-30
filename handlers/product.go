@@ -3,17 +3,21 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/nghiack7/manager/pkg/models"
 	"github.com/nghiack7/manager/pkg/services"
+	"github.com/nghiack7/manager/utils"
 )
 
 type ProductHandler interface {
+	GetProducts(gCtx *gin.Context)
 	GetProductByName(gCtx *gin.Context)
 	CreateProduct(gCtx *gin.Context)
 	UpdateProduct(gCtx *gin.Context)
 	DeleteProduct(gCtx *gin.Context)
+	GetOrderItemsByProductID(gCtx *gin.Context)
 }
 
 type productHandler struct {
@@ -24,41 +28,27 @@ func NewProductHandler(service services.Service) ProductHandler {
 	return &productHandler{service: service}
 }
 
+func (h *productHandler) GetProducts(gCtx *gin.Context) {
+	products, err := h.service.GetProducts()
+	if err != nil {
+		gCtx.AbortWithStatusJSON(500, Response{false, MessageFailedDatabase, nil})
+		return
+	}
+	gCtx.JSON(200, Response{true, MessageSuccess, products})
+}
+
 func (h *productHandler) GetProductByName(gCtx *gin.Context) {
-	name, ok := gCtx.GetQuery("name")
+	name, ok := gCtx.GetQuery("search")
 	if !ok {
 		gCtx.AbortWithStatusJSON(http.StatusBadRequest, Response{false, MessageFailedBadRequest, nil})
 		return
 	}
-	product, err := h.service.GetProductsByName(name)
+	products, err := h.service.GetProductByName(name)
 	if err != nil {
 		gCtx.AbortWithStatusJSON(500, Response{false, MessageFailedDatabase, nil})
 		return
 	}
-	orderItems, err := h.service.GetOrderItemsByProductID(product.ID)
-	if err != nil {
-		gCtx.AbortWithStatusJSON(500, Response{false, MessageFailedDatabase, nil})
-		return
-	}
-	var revenue float64
-	for _, item := range orderItems {
-		revenue += float64(item.Quantity) * product.Price
-	}
-	customers, err := h.service.GetCustomersByProductID(product.ID)
-	if err != nil {
-		gCtx.AbortWithStatusJSON(500, Response{false, MessageFailedDatabase, nil})
-		return
-	}
-	response := struct {
-		Name      string            `json:"name"`
-		Revenue   float64           `json:"revenue"`
-		Customers []models.Customer `json:"customer"`
-	}{
-		Name:      product.Name,
-		Revenue:   revenue,
-		Customers: customers,
-	}
-	gCtx.JSON(http.StatusOK, Response{true, MessageSuccess, response})
+	gCtx.JSON(200, Response{true, MessageSuccess, products})
 }
 
 func (h *productHandler) CreateProduct(gCtx *gin.Context) {
@@ -117,4 +107,46 @@ func (h *productHandler) DeleteProduct(gCtx *gin.Context) {
 		return
 	}
 	gCtx.JSON(200, Response{true, MessageSuccess, nil})
+}
+
+func (h *productHandler) GetOrderItemsByProductID(gCtx *gin.Context) {
+	idStr := gCtx.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		gCtx.AbortWithStatusJSON(400, Response{false, MessageFailedBadRequest, nil})
+		return
+	}
+	product, err := h.service.GetProductByID(id)
+	if err != nil {
+		gCtx.AbortWithStatusJSON(500, Response{false, MessageFailedDatabase, nil})
+		return
+	}
+	orderItems, err := h.service.GetOrderItemsByProductID(id)
+	if err != nil {
+		gCtx.AbortWithStatusJSON(500, Response{false, MessageFailedDatabase, nil})
+		return
+	}
+	type response struct {
+		ID           int64     `json:"id"`
+		CustomerName string    `json:"customer_name"`
+		Total        float64   `json:"total"`
+		CreatedAt    time.Time `json:"created_at"`
+	}
+	var responses []response
+	for _, item := range orderItems {
+		order, err := h.service.GetOrderByOrderItemID(item.ID)
+		if err != nil {
+			gCtx.AbortWithStatusJSON(500, Response{false, MessageFailedDatabase, nil})
+			return
+		}
+		customer, err := h.service.GetCustomerByOrderID(order.ID)
+
+		if err != nil {
+			gCtx.AbortWithStatusJSON(500, Response{false, MessageFailedDatabase, nil})
+			return
+		}
+		total := utils.CalculateTotal(product.Price, item.Quantity)
+		responses = append(responses, response{item.ID, customer.Name, total, order.CreatedAt})
+	}
+	gCtx.JSON(200, Response{true, MessageSuccess, responses})
 }

@@ -6,11 +6,12 @@ import (
 )
 
 type UserRepository interface {
-	CreateNewUser(models.Customer) error
-	UpdateUser(models.Customer) error
+	CreateNewUser(*models.Customer) error
 	FindUser(any) (*models.Customer, error)
 	GetCustomersByProductID(int64) ([]models.Customer, error)
+	GetCustomerByOrderID(orderID int64) (*models.Customer, error)
 	GetCustomersList() ([]models.Customer, error)
+	DeleteUser(int64) error
 }
 
 type userRepository struct {
@@ -25,15 +26,7 @@ func NewUserRepository(opts ...RepoOpts) *userRepository {
 	return u
 }
 
-func (u *userRepository) CreateNewUser(user models.Customer) error {
-	err := u.db.Save(&user).Error
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (u *userRepository) UpdateUser(user models.Customer) error {
+func (u *userRepository) CreateNewUser(user *models.Customer) error {
 	err := u.db.Save(&user).Error
 	if err != nil {
 		return err
@@ -79,4 +72,26 @@ func (u *userRepository) GetCustomersList() ([]models.Customer, error) {
 		return nil, err
 	}
 	return customers, nil
+}
+
+func (u *userRepository) DeleteUser(userID int64) error {
+	err := u.db.Model(models.Customer{}).Where("id=?", userID).Delete(nil).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (u *userRepository) GetCustomerByOrderID(orderID int64) (*models.Customer, error) {
+	var order models.Order
+	err := u.db.Where("id = ?", orderID).First(&order).Error
+	if err != nil {
+		return nil, err
+	}
+	var customer models.Customer
+	err = u.db.Where("id=?", order.CustomerID).First(&customer).Error
+	if err != nil {
+		return nil, err
+	}
+	return &customer, nil
 }

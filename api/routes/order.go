@@ -9,7 +9,8 @@ func RegisterOrderRoute(r *gin.RouterGroup, order handlers.OrderHandler) {
 	r = r.Group("/orders")
 	{
 		r.POST("/", order.CreateOrder)
-		r.GET("/", order.GetOrderByCustomerID)
+		r.GET("/customer", order.GetOrderByCustomerID)
+		r.GET("/", order.GetOrders)
 
 	}
 }

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/nghiack7/manager/pkg/models"
@@ -14,6 +15,8 @@ type CustomerHandler interface {
 	GetCustomerOrders(*gin.Context)
 	CreateCustomer(*gin.Context)
 	GetListCustomers(*gin.Context)
+	UpdateCustomer(*gin.Context)
+	DeleteCustomer(*gin.Context)
 }
 
 type customerHandler struct {
@@ -25,7 +28,7 @@ func NewCustomerHandler(service services.Service) CustomerHandler {
 }
 func (h *customerHandler) GetListCustomers(gctx *gin.Context) {
 
-	customers, err := h.service.GetListCustomers()
+	customers, err := h.service.ListCustomers()
 	if err != nil {
 		gctx.AbortWithStatusJSON(http.StatusInternalServerError, Response{false, errors.Wrap(err, MessageFailedDatabase).Error(), nil})
 		return
@@ -57,7 +60,7 @@ func (h *customerHandler) GetCustomerOrders(gctx *gin.Context) {
 		gctx.AbortWithStatusJSON(http.StatusInternalServerError, Response{false, errors.Wrap(err, MessageFailedDatabase).Error(), nil})
 		return
 	}
-	orders, err := h.service.GetOrderByCustomerID(customer.ID)
+	orders, err := h.service.GetOrdersByCustomerID(customer.ID)
 	if err != nil {
 		gctx.AbortWithStatusJSON(http.StatusInternalServerError, Response{false, errors.Wrap(err, MessageFailedDatabase).Error(), nil})
 		return
@@ -72,10 +75,40 @@ func (h *customerHandler) CreateCustomer(gCtx *gin.Context) {
 		gCtx.AbortWithStatusJSON(http.StatusBadRequest, Response{false, MessageFailedBadRequest, nil})
 		return
 	}
-	err = h.service.CreateCustomer(customer)
+	err = h.service.CreateCustomer(&customer)
 	if err != nil {
 		gCtx.AbortWithStatusJSON(http.StatusBadRequest, Response{false, MessageFailedDatabase, nil})
 		return
 	}
 	gCtx.JSON(http.StatusOK, Response{true, MessageSuccess, customer})
+}
+
+func (h *customerHandler) UpdateCustomer(gCtx *gin.Context) {
+	var customer models.Customer
+	err := gCtx.ShouldBindJSON(&customer)
+	if err != nil {
+		gCtx.AbortWithStatusJSON(http.StatusBadRequest, Response{false, MessageFailedBadRequest, nil})
+		return
+	}
+	err = h.service.CreateCustomer(&customer)
+	if err != nil {
+		gCtx.AbortWithStatusJSON(http.StatusBadRequest, Response{false, MessageFailedDatabase, nil})
+		return
+	}
+	gCtx.JSON(http.StatusOK, Response{true, MessageSuccess, customer})
+}
+
+func (h *customerHandler) DeleteCustomer(gCtx *gin.Context) {
+	userIDStr := gCtx.Param("id")
+	id, err := strconv.ParseInt(userIDStr, 10, 64)
+	if err != nil {
+		gCtx.AbortWithStatusJSON(http.StatusBadRequest, Response{false, MessageFailedBadRequest, nil})
+		return
+	}
+	err = h.service.DeleteCustomer(id)
+	if err != nil {
+		gCtx.AbortWithStatusJSON(http.StatusBadRequest, Response{false, MessageFailedDatabase, nil})
+		return
+	}
+	gCtx.JSON(200, Response{true, MessageSuccess, nil})
 }

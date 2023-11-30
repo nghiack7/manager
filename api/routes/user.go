@@ -12,5 +12,7 @@ func RegisterUserRoute(r *gin.RouterGroup, cHandler handlers.CustomerHandler) {
 		route.GET("/byphone", cHandler.GetCustomerByPhone)
 		route.GET("/info", cHandler.GetCustomerOrders)
 		route.POST("/", cHandler.CreateCustomer)
+		route.PUT("/:id", cHandler.UpdateCustomer)
+		route.DELETE("/:id", cHandler.DeleteCustomer)
 	}
 }

@@ -10,6 +10,8 @@ type OrderRepository interface {
 	UpdateOrder(order models.Order) error
 	GetOrderByCustomerID(customerID int64) ([]models.Order, error)
 	GetOrderItemsByProductID(int64) ([]models.OrderItem, error)
+	GetOrderByOrderItemID(int64) (*models.Order, error)
+	GetOrders() ([]models.Order, error)
 }
 
 type orderRepository struct {
@@ -42,7 +44,7 @@ func (repo *orderRepository) UpdateOrder(o models.Order) error {
 
 func (repo *orderRepository) GetOrderByCustomerID(customerID int64) ([]models.Order, error) {
 	var orders []models.Order
-	err := repo.db.Where("customer_id = ?", customerID).Find(&orders).Error
+	err := repo.db.Preload("Items").Where("customer_id = ?", customerID).Find(&orders).Error
 	if err != nil {
 		return nil, err
 	}
@@ -56,4 +58,27 @@ func (repo *orderRepository) GetOrderItemsByProductID(productID int64) ([]models
 		return nil, err
 	}
 	return orderItems, nil
+}
+
+func (repo *orderRepository) GetOrderByOrderItemID(id int64) (*models.Order, error) {
+	var order models.Order
+	var orderItem models.OrderItem
+	err := repo.db.Where("id=?", id).First(&orderItem).Error
+	if err != nil {
+		return nil, err
+	}
+	err = repo.db.Where("id=?", orderItem.OrderID).First(&order).Error
+	if err != nil {
+		return nil, err
+	}
+	return &order, nil
+}
+
+func (repo *orderRepository) GetOrders() ([]models.Order, error) {
+	var orders []models.Order
+	err := repo.db.Preload("Items").Find(&orders).Error
+	if err != nil {
+		return nil, err
+	}
+	return orders, nil
 }
