@@ -93,8 +93,8 @@ const EditCustomerPopup = ({ onClose, customer, onEditCustomer }) => {
                 label="Gender"
                 name="gender"
               >
-                <MenuItem value="male">Nam</MenuItem>
-                <MenuItem value="female">Nữ</MenuItem>
+                <MenuItem value="Nam">Nam</MenuItem>
+                <MenuItem value="Nữ">Nữ</MenuItem>
                 {/* Add other gender options as needed */}
               </Select>
             </FormControl>

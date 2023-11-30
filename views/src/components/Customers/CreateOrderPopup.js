@@ -41,6 +41,7 @@ const CreateOrderPopup = ({ onClose, customer, onCreateOrder }) => {
     customer_id: 0,
     items: [
       {
+        product_name: "",
         product_id: 0,
         quantity: 0,
       },
@@ -69,6 +70,13 @@ const CreateOrderPopup = ({ onClose, customer, onCreateOrder }) => {
   const handleItemChange = (index, field, value) => {
     const updatedItems = [...formData.items];
     updatedItems[index][field] = field === 'quantity' ? (isNaN(parseInt(value)) ? value : parseInt(value)) : value;
+    if (field === 'product_id') {
+      const selectedProduct = products.find(product => product.id === value);
+      if (selectedProduct) {
+        const updatedItems = [...formData.items];
+        updatedItems[index]['product_id'] = value;
+        updatedItems[index]['product_name'] = selectedProduct.name;
+      }};
      setFormData((prevData) => ({
       ...prevData,
       items: updatedItems,
@@ -82,6 +90,7 @@ const CreateOrderPopup = ({ onClose, customer, onCreateOrder }) => {
       items: [
         ...prevData.items,
         {
+          product_name: "",
           product_id: "",
           quantity: "",
         },
