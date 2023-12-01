@@ -8,3 +8,5 @@ services:
       - .env
     ports:
       - "${MNG_PORT}:${MNG_PORT}"
+    volumes:
+      - ./manage.db:/home/deploy/mng/manage.db
