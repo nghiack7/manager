@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -57,10 +58,8 @@ func (h *orderHandler) GetOrderByCustomerID(gCtx *gin.Context) {
 		gCtx.AbortWithStatusJSON(400, Response{false, MessageFailedBadRequest, nil})
 		return
 	}
-	idparam, err := strconv.ParseInt(param, 10, 64)
-	if err != nil {
-		idparam = h.queryNameOrPhone(param)
-	}
+	idparam, _ := strconv.ParseInt(param, 10, 64)
+
 	var ids []int64
 	customers, _ := h.service.ListCustomers()
 	for _, customer := range customers {
@@ -69,8 +68,14 @@ func (h *orderHandler) GetOrderByCustomerID(gCtx *gin.Context) {
 		}
 	}
 	if len(ids) == 0 {
-		gCtx.AbortWithStatusJSON(400, Response{false, MessageFailedBadRequest, nil})
-		return
+		listID := h.queryNameOrPhone(param)
+		if len(listID) == 0 {
+			gCtx.AbortWithStatusJSON(400, Response{false, MessageFailedBadRequest, nil})
+			return
+		} else {
+			ids = append(ids, listID...)
+		}
+
 	}
 	var orders []models.Order
 	var wg sync.WaitGroup
@@ -81,6 +86,13 @@ func (h *orderHandler) GetOrderByCustomerID(gCtx *gin.Context) {
 			order, err := h.service.GetOrdersByCustomerID(id)
 			if err != nil {
 				return
+			}
+			customer, err := h.service.GetCustomerByID(id)
+			if err != nil {
+				return
+			}
+			for i := range order {
+				order[i].CustomerName = customer.Name
 			}
 			mu.Lock()
 			orders = append(orders, order...)
@@ -110,10 +122,16 @@ func (h *orderHandler) GetOrders(c *gin.Context) {
 	c.JSON(200, Response{true, MessageSuccess, orders})
 }
 
-func (h *orderHandler) queryNameOrPhone(search string) int64 {
-	customer, err := h.service.GetCustomerInfo(search)
+func (h *orderHandler) queryNameOrPhone(search string) []int64 {
+	customers, err := h.service.ListCustomers()
 	if err != nil {
-		return 0
+		return nil
 	}
-	return customer.ID
+	var ids []int64
+	for _, customer := range customers {
+		if strings.Contains(customer.Name, search) || strings.Contains(customer.NumberPhone, search) {
+			ids = append(ids, customer.ID)
+		}
+	}
+	return ids
 }

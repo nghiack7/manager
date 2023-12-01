@@ -33,6 +33,11 @@ const useStyles = makeStyles({
   actionButton: {
     marginRight: 5,
   },
+  emptyCell: {
+    textAlign: "center",
+    fontStyle: "italic",
+    color: "red",
+  },
   createOrderButton: {
     marginRight: 5,
     backgroundColor: "#2196F3", // Create Order button background color
@@ -62,11 +67,11 @@ const Orders = () => {
     } catch (error) {
       console.error("Error fetching data:", error);
       // Handle error state or display error message to the user
-    } 
-  }
-  useEffect(()=>{
+    }
+  };
+  useEffect(() => {
     fetchDataOrders();
-  },[]);
+  }, []);
 
   const handleSearch = async () => {
     try {
@@ -79,6 +84,7 @@ const Orders = () => {
       setSearchResults(data.data); // Assuming data is an array of filtered orders
     } catch (error) {
       console.error("Error fetching data:", error);
+      setSearchResults([]);
       // Handle error state or display error message to the user
     }
   };
@@ -124,60 +130,69 @@ const Orders = () => {
               <TableCell className={classes.tableHeaderCell}>Số TT</TableCell>
               <TableCell className={classes.tableHeaderCell}>
                 Khách Hàng
-              </TableCell> 
+              </TableCell>
               <TableCell className={classes.tableHeaderCell}>
                 Danh Sách Đơn Hàng
               </TableCell>
-          
+
               <TableCell className={classes.tableHeaderCell}>
                 Thời Gian Mua
               </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {/* Display data in table rows */}
-            {searchResults.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((order) => (
-                <TableRow key={order.id} className={classes.tableRow}>
-                  <TableCell>{order.id}</TableCell>
-                  <TableCell>{order.customer_name}</TableCell>
-                  <TableCell>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell className={classes.tableHeaderCell}>
-                          ID
-                        </TableCell>
-                        
-                        <TableCell className={classes.tableHeaderCell}>
-                          Tên Sản Phẩm
-                        </TableCell>
-                        <TableCell className={classes.tableHeaderCell}>
-                          Số Lượng
-                        </TableCell>
-                        {/* Add more table headers as needed */}
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {order.items && order.items.length > 0 ? (
-                        order.items.map((item, index) => (
-                          <TableRow key={index}>
-                            <TableCell>{item.id}</TableCell>
-                            <TableCell>{item.product_name}</TableCell>
-                            <TableCell>{item.quantity}</TableCell>
-                            {/* Add more item details */}
+            {searchResults.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} className={classes.emptyCell}>
+                  Không Tìm Thấy Kết Quả
+                </TableCell>
+              </TableRow>
+            ) : (
+              searchResults
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map((order) => (
+                  <TableRow key={order.id} className={classes.tableRow}>
+                    <TableCell>{order.id}</TableCell>
+                    <TableCell>{order.customer_name}</TableCell>
+                    <TableCell>
+                      <Table>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell className={classes.tableHeaderCell}>
+                              ID
+                            </TableCell>
+
+                            <TableCell className={classes.tableHeaderCell}>
+                              Tên Sản Phẩm
+                            </TableCell>
+                            <TableCell className={classes.tableHeaderCell}>
+                              Số Lượng
+                            </TableCell>
+                            {/* Add more table headers as needed */}
                           </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell colSpan={2}>No items found</TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                  </TableCell>
-                  <TableCell>{order.created_at}</TableCell>
-                </TableRow>
-              ))}
+                        </TableHead>
+                        <TableBody>
+                          {order.items && order.items.length > 0 ? (
+                            order.items.map((item, index) => (
+                              <TableRow key={index}>
+                                <TableCell>{item.id}</TableCell>
+                                <TableCell>{item.product_name}</TableCell>
+                                <TableCell>{item.quantity}</TableCell>
+                                {/* Add more item details */}
+                              </TableRow>
+                            ))
+                          ) : (
+                            <TableRow>
+                              <TableCell colSpan={2}>No items found</TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </TableCell>
+                    <TableCell>{order.created_at}</TableCell>
+                  </TableRow>
+                ))
+            )}
           </TableBody>
         </Table>
       </TableContainer>

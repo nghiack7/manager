@@ -19,7 +19,7 @@ type Product struct {
 type Order struct {
 	ID           int64       `json:"id" gorm:"uniqueIndex"`
 	CustomerID   int64       `json:"customer_id"`
-	CustomerName string      `json:"customer_name"`
+	CustomerName string      `json:"customer_name" gorm:"-"`
 	Items        []OrderItem `json:"items" gorm:"foreignKey:OrderID"`
 	CreatedAt    time.Time   `json:"created_at"`
 }

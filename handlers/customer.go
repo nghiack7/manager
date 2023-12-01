@@ -8,6 +8,7 @@ import (
 	"github.com/nghiack7/manager/pkg/models"
 	"github.com/nghiack7/manager/pkg/services"
 	"github.com/pkg/errors"
+	"gorm.io/gorm"
 )
 
 type CustomerHandler interface {
@@ -74,6 +75,12 @@ func (h *customerHandler) CreateCustomer(gCtx *gin.Context) {
 	if err != nil {
 		gCtx.AbortWithStatusJSON(http.StatusBadRequest, Response{false, MessageFailedBadRequest, nil})
 		return
+	}
+	_, err = h.service.GetCustomerInfo(customer.NumberPhone)
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		gCtx.AbortWithStatusJSON(http.StatusBadRequest, Response{false, "Customer Is Created Please Check With NumberPhone", nil})
+		return
+
 	}
 	err = h.service.CreateCustomer(&customer)
 	if err != nil {
