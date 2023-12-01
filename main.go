@@ -33,7 +33,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
+	if dbInstance == nil {
+		panic("failed to initialize database")
+	}
 	userRepo := repositories.NewUserRepository(repositories.WithDatabase(dbInstance))
 	productRepo := repositories.NewProductRepository(repositories.WithDatabase(dbInstance))
 	orderRepo := repositories.NewOrderRepository(repositories.WithDatabase(dbInstance))
