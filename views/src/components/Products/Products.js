@@ -222,6 +222,7 @@ const Products = () => {
                   Sản Phẩm Không Tồn Tại! Vui lòng kiểm tra lại
                 </TableCell>
               </TableRow>
+              
             ) : (
               products.map((product) => (
                 <TableRow key={product.id} className={classes.tableRow}>
@@ -254,7 +255,6 @@ const Products = () => {
         Tạo Sản Phẩm Mới
       </Button>
 
-      {/* Dialog for creating a new product */}
       <Dialog
         open={showCreateProductDialog}
         onClose={closeCreateProductDialog}

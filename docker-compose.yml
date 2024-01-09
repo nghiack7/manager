@@ -3,7 +3,10 @@ version: "3"
 services:
   manager:
     
-    image: nghiack7/manager-app:v1-release
+    image: nghiack7/manager-app:v2-release
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
     env_file:
       - .env
     ports:
